@@ -415,6 +415,54 @@ p_js_rek
 dev.off()
 
 
+bb1 = df_rek_tmp %>%
+  dplyr::filter(Vuosi >= year_min2) %>%
+  dplyr::mutate(Myöntäjä = ifelse(Myöntäjä == "HUS", "Helsinki",
+                                  ifelse(Myöntäjä == "TAYS", "Tampere",
+                                         ifelse(Myöntäjä == "TYKS", "Turku",
+                                                ifelse(Myöntäjä == "KYS", "Kuopio",
+                                                       ifelse(Myöntäjä == "OYS", "Oulu", Myöntäjä)))))) %>%
+  group_by(Tutkimukset, Vuosi) %>%
+  mutate(Tutkimusluvat_sum = sum(Tutkimusluvat)) %>%
+  slice(1) %>%
+  ungroup()
+png("./results/muut_StudyPermitCount2.png", width = 6, height = 5, res = 300, units = "in")
+p_js_rek = ggplot(bb1) +
+  geom_bar(aes(x = Vuosi, y = Tutkimusluvat_sum),
+           stat="identity", color="black", fill="grey") +
+  geom_segment(data = tmp1,
+               aes(x = gdpr_year,
+                   y = max(tmp1[tmp1$Vuosi >= year_min2,]$Tutkimusluvat, na.rm = TRUE)*1.08,
+                   xend = gdpr_year,
+                   yend = max(tmp1[tmp1$Vuosi >= year_min2,]$Tutkimusluvat, na.rm = TRUE)*1.02),
+               arrow = arrow(length = unit(0.2, "inches"), type = "closed"), size = 1.5, color = "black") +
+  geom_segment(data = tmp1,
+               aes(x = secondary_use_act_year,
+                   y = max(tmp1[tmp1$Vuosi >= year_min2,]$Tutkimusluvat, na.rm = TRUE)*1.08,
+                   xend = secondary_use_act_year,
+                   yend = max(tmp1[tmp1$Vuosi >= year_min2,]$Tutkimusluvat, na.rm = TRUE)*1.02),
+               arrow = arrow(length = unit(0.2, "inches"), type = "closed"), size = 1.5, color = "black") +
+  annotate("label", x=gdpr_year, y=max(tmp1[tmp1$Vuosi >= year_min2,]$Tutkimusluvat, na.rm = TRUE)*1.095, label= "GDPR", hjust=0.5, vjust=0) +
+  annotate("label", x=secondary_use_act_year, y=max(tmp1[tmp1$Vuosi >= year_min2,]$Tutkimusluvat, na.rm = TRUE)*1.095, label= "Secondary Use Act", hjust=0.5, vjust=0) +
+  # geom_line(size = 3) +
+  # geom_point(size = 2, color="black") +
+  ylim(0, sum(df_nonrek[df_nonrek$Vuosi == 2017,]$Tutkimusluvat, na.rm = TRUE)*1.12) +
+  # scale_y_continuous(name = "Study permit count",
+  #                    sec.axis = sec_axis(~., name = "Study permit count (cumulative)")) +
+  xlab("Year") +
+  ylab("Data permit count") +
+  theme_bw() + 
+  theme(text =  element_text(face = "bold"),
+        axis.text.x = element_text(size=12, colour = "black", face = "plain"),
+        axis.text.y = element_text(size=12, colour = "black", face = "plain"),
+        axis.title = element_text(size=14, face="bold", colour = "black"),
+        legend.title = element_text(size=14, face="bold", colour = "black"),
+        legend.text = element_text(size=14, face="bold", colour = "black"),
+        legend.position = "bottom") +
+  scale_x_continuous(breaks = seq(year_min2, year_max, by = 1))
+p_js_rek
+dev.off()
+
 # Number of new non-registry research study permits per year
 df_nonrek %>%
   group_by(Year) %>%
